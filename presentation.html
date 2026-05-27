@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 4 — Design Literacy, Review Process &amp; Mini-Project</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy:      #0D1B2A;
+    --navy-mid:  #1A2D42;
+    --navy-card: #1E3450;
+    --accent:    #E8A020;
+    --accent2:   #F0C060;
+    --teal:      #2EC4B6;
+    --red:       #E63946;
+    --green:     #2DC653;
+    --purple:    #9B59B6;
+    --text:      #EEF2F7;
+    --muted:     #8FA3BC;
+    --border:    rgba(255,255,255,0.08);
+    --slide-w:   1280px;
+    --slide-h:   720px;
+  }
+  body {
+    background: #0a0f18;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--text);
+    overflow: hidden;
+  }
+  #wrapper {
+    display: flex; align-items: center; justify-content: center;
+    width: 100vw; height: 100vh; overflow: hidden;
+  }
+  #deck {
+    width: var(--slide-w); height: var(--slide-h);
+    position: relative; overflow: hidden;
+  }
+  .slide {
+    position: absolute; inset: 0;
+    width: var(--slide-w); height: var(--slide-h);
+    background: var(--navy);
+    display: none; padding: 52px 68px;
+    flex-direction: column; overflow: hidden;
+  }
+  .slide.active { display: flex; }
+  .slide.cover {
+    background: linear-gradient(135deg, #0D1B2A 0%, #12294A 60%, #1A3A5C 100%);
+    padding: 0; align-items: stretch;
+  }
+  .slide.section-break {
+    background: linear-gradient(135deg, var(--navy-mid), #0e2236);
+    align-items: center; justify-content: center; text-align: center;
+  }
+  .slide.closing {
+    background: linear-gradient(135deg, #0D1B2A 0%, #12294A 100%);
+  }
+  .slide:not(.cover):not(.section-break)::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--teal) 100%);
+  }
+
+  /* Cover */
+  .cover-left {
+    flex: 1; background: linear-gradient(180deg, #12294A 0%, #0D1B2A 100%);
+    padding: 80px 64px; display: flex; flex-direction: column; justify-content: center;
+    border-right: 1px solid var(--border); position: relative; overflow: hidden;
+  }
+  .cover-left::after {
+    content: ''; position: absolute; bottom: -80px; right: -80px;
+    width: 320px; height: 320px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(232,160,32,0.12) 0%, transparent 70%);
+  }
+  .cover-right {
+    width: 380px; background: var(--navy-card);
+    padding: 64px 40px; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .cover-tag {
+    display: inline-block;
+    background: rgba(232,160,32,0.15); color: var(--accent);
+    border: 1px solid rgba(232,160,32,0.3); border-radius: 4px;
+    padding: 4px 14px; font-size: 13px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 24px;
+  }
+  .cover-title { font-size: 50px; font-weight: 800; line-height: 1.1; color: #fff; margin-bottom: 16px; }
+  .cover-title span { color: var(--accent); }
+  .cover-subtitle { font-size: 17px; color: var(--muted); line-height: 1.6; margin-bottom: 40px; }
+  .cover-meta { display: flex; gap: 24px; }
+  .cover-meta-item { display: flex; flex-direction: column; gap: 4px; }
+  .cover-meta-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  .cover-meta-value { font-size: 15px; font-weight: 700; color: var(--accent2); }
+  .cover-agenda-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; font-weight: 600; }
+  .cover-agenda-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+  .cover-agenda-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(232,160,32,0.15); border: 1px solid rgba(232,160,32,0.4);
+    color: var(--accent); font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+  }
+  .cover-agenda-text { font-size: 14px; color: var(--text); line-height: 1.4; }
+  .cover-logo { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; }
+
+  /* Slide header */
+  .slide-header { margin-bottom: 32px; }
+  .session-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(232,160,32,0.12); border: 1px solid rgba(232,160,32,0.25);
+    border-radius: 4px; padding: 4px 12px; margin-bottom: 12px;
+  }
+  .session-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .session-badge span { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); }
+  .slide-title { font-size: 36px; font-weight: 800; color: #fff; line-height: 1.15; }
+  .slide-title .highlight { color: var(--accent); }
+
+  /* Section break */
+  .section-num {
+    font-size: 120px; font-weight: 900; color: rgba(255,255,255,0.04);
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    user-select: none; pointer-events: none;
+  }
+  .section-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 16px; }
+  .section-title { font-size: 50px; font-weight: 800; color: #fff; margin-bottom: 16px; line-height: 1.1; }
+  .section-sub { font-size: 17px; color: var(--muted); max-width: 600px; }
+  .section-duration {
+    margin-top: 32px; display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(46,196,182,0.1); border: 1px solid rgba(46,196,182,0.3);
+    border-radius: 20px; padding: 8px 20px; font-size: 14px; font-weight: 600; color: var(--teal);
+  }
+
+  /* Layout */
+  .cols { display: flex; gap: 28px; flex: 1; }
+  .col { flex: 1; display: flex; flex-direction: column; }
+  .col-40 { flex: 0 0 40%; }
+  .col-55 { flex: 0 0 55%; }
+  .col-45 { flex: 0 0 45%; }
+
+  /* Cards */
+  .card {
+    background: var(--navy-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px 24px;
+  }
+  .card + .card { margin-top: 14px; }
+  .card-title {
+    font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::before { content: ''; width: 3px; height: 14px; border-radius: 2px; background: var(--accent); }
+  .card.teal { border-color: rgba(46,196,182,0.3); }
+  .card.teal .card-title::before { background: var(--teal); }
+  .card.amber { border-color: rgba(232,160,32,0.3); }
+  .card.red { border-color: rgba(230,57,70,0.3); }
+  .card.green { border-color: rgba(45,198,83,0.3); }
+  .card.purple { border-color: rgba(155,89,182,0.3); }
+
+  /* Bullets */
+  .bullets { list-style: none; }
+  .bullets li {
+    display: flex; align-items: flex-start; gap: 12px; padding: 7px 0;
+    font-size: 15px; color: var(--text); line-height: 1.5;
+    border-bottom: 1px solid var(--border);
+  }
+  .bullets li:last-child { border-bottom: none; }
+  .bullets li::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+    flex-shrink: 0; margin-top: 8px;
+  }
+  .bullets.teal li::before { background: var(--teal); }
+  .bullets.sm li { font-size: 13px; padding: 5px 0; }
+
+  /* Tables */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th {
+    background: rgba(255,255,255,0.05); padding: 9px 14px; text-align: left;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; border-bottom: 1px solid var(--border);
+  }
+  .data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; line-height: 1.4; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table td:first-child { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .data-table .good { color: var(--green); font-weight: 600; }
+  .data-table .bad  { color: var(--red);   font-weight: 600; }
+  .data-table .accent { color: var(--accent); font-weight: 600; }
+
+  /* Timetable */
+  .timetable { display: flex; flex-direction: column; gap: 5px; width: 100%; }
+  .timetable-row {
+    display: flex; align-items: center; gap: 14px; padding: 9px 14px;
+    border-radius: 6px; background: var(--navy-card); border: 1px solid var(--border);
+  }
+  .timetable-row.break { background: rgba(255,255,255,0.03); border-style: dashed; }
+  .timetable-time { font-size: 11px; color: var(--muted); width: 130px; flex-shrink: 0; font-family: 'Courier New', monospace; }
+  .timetable-dur  { font-size: 11px; color: var(--accent); width: 55px; flex-shrink: 0; font-weight: 700; }
+  .timetable-name { font-size: 13px; color: var(--text); flex: 1; font-weight: 500; }
+  .timetable-type { font-size: 11px; color: var(--muted); text-align: right; }
+
+  /* Pills */
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .pill-orange { background: rgba(232,160,32,0.15); color: var(--accent); border: 1px solid rgba(232,160,32,0.3); }
+  .pill-teal   { background: rgba(46,196,182,0.12); color: var(--teal);   border: 1px solid rgba(46,196,182,0.3); }
+  .pill-red    { background: rgba(230,57,70,0.12);  color: var(--red);    border: 1px solid rgba(230,57,70,0.3); }
+  .pill-green  { background: rgba(45,198,83,0.12);  color: var(--green);  border: 1px solid rgba(45,198,83,0.3); }
+  .pill-purple { background: rgba(155,89,182,0.12); color: var(--purple); border: 1px solid rgba(155,89,182,0.3); }
+
+  /* Steps */
+  .steps { display: flex; align-items: center; gap: 0; width: 100%; }
+  .step-item { flex: 1; background: var(--navy-card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 16px; text-align: center; }
+  .step-num {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(232,160,32,0.15); border: 2px solid var(--accent);
+    color: var(--accent); font-size: 14px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;
+  }
+  .step-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .step-desc  { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .step-arrow { font-size: 20px; color: var(--accent); margin: 0 6px; flex-shrink: 0; }
+
+  /* Quote */
+  .quote {
+    border-left: 3px solid var(--accent); padding: 14px 20px;
+    background: rgba(232,160,32,0.06); border-radius: 0 8px 8px 0; margin: 8px 0;
+  }
+  .quote p { font-size: 14px; font-style: italic; color: var(--accent2); line-height: 1.7; }
+
+  /* Checklist */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 14px; padding: 9px 0;
+    font-size: 14px; color: var(--text); line-height: 1.5; border-bottom: 1px solid var(--border);
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .check-box { width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--teal); flex-shrink: 0; margin-top: 2px; }
+
+  /* Two-column code panels */
+  .code-panel {
+    background: #0a1628; border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; font-family: 'Cascadia Code','Fira Code','Courier New',monospace;
+    font-size: 11.5px; line-height: 1.6; overflow: hidden; flex: 1;
+  }
+  .code-panel .cm { color: #5c7a9e; }
+  .code-panel .kw { color: #569cd6; }
+  .code-panel .st { color: #ce9178; }
+  .code-panel .fn { color: #dcdcaa; }
+  .code-panel .cl { color: #4ec9b0; }
+  .code-panel .ok { color: var(--green); }
+  .code-panel .er { color: var(--red); }
+
+  /* State grid */
+  .state-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .state-item {
+    background: var(--navy-card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; display: flex; align-items: center; gap: 10px;
+  }
+  .state-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .state-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .state-desc { font-size: 11px; color: var(--muted); }
+
+  /* Workshop tasks */
+  .workshop-tasks { display: flex; flex-direction: column; gap: 8px; }
+  .task-item {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px;
+    background: var(--navy-card); border: 1px solid var(--border); border-radius: 8px;
+  }
+  .task-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(232,160,32,0.15); border: 1px solid rgba(232,160,32,0.4);
+    color: var(--accent); font-size: 12px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .task-body { flex: 1; }
+  .task-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .task-desc  { font-size: 11.5px; color: var(--muted); }
+  .task-time  { font-size: 11px; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+
+  /* Nav */
+  #nav {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 16px;
+    background: rgba(13,27,42,0.95); border: 1px solid var(--border);
+    border-radius: 30px; padding: 8px 20px; backdrop-filter: blur(10px); z-index: 100;
+  }
+  .nav-btn { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: color .2s, background .2s; }
+  .nav-btn:hover { color: var(--accent); background: rgba(232,160,32,0.08); }
+  #slide-counter { font-size: 13px; color: var(--muted); min-width: 60px; text-align: center; font-family: 'Courier New', monospace; }
+  #progress-bar { position: fixed; bottom: 0; left: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--teal)); transition: width .3s ease; z-index: 101; }
+
+  /* Utility */
+  .mt-auto { margin-top: auto; }
+  .mt-8  { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-20 { margin-top: 20px; }
+  .mb-8  { margin-bottom: 8px; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+  .text-muted  { color: var(--muted); }
+  .text-accent { color: var(--accent); }
+  .text-teal   { color: var(--teal); }
+  .text-green  { color: var(--green); }
+  .text-red    { color: var(--red); }
+  .text-sm     { font-size: 12px; }
+  .font-bold   { font-weight: 700; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+  /* Concept cards */
+  .concept-card { background: var(--navy-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .concept-card-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .concept-card-desc  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* Bridge diagram */
+  .bridge-row {
+    display: flex; align-items: center; gap: 0; margin-bottom: 8px;
+  }
+  .bridge-box {
+    flex: 1; background: var(--navy-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; font-size: 12px; text-align: center;
+  }
+  .bridge-arrow { font-size: 18px; color: var(--accent); padding: 0 8px; flex-shrink: 0; }
+
+  /* Scope lock visual */
+  .scope-box {
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 6px;
+    display: flex; align-items: flex-start; gap: 10px; font-size: 13px;
+  }
+  .scope-in     { background: rgba(45,198,83,0.1);  border: 1px solid rgba(45,198,83,0.3); }
+  .scope-out    { background: rgba(230,57,70,0.1);   border: 1px solid rgba(230,57,70,0.3); }
+  .scope-defer  { background: rgba(232,160,32,0.1);  border: 1px solid rgba(232,160,32,0.3); }
+  .scope-icon   { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .scope-label  { font-weight: 700; display: block; margin-bottom: 2px; }
+  .scope-items  { color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+  /* Review role cards */
+  .role-card {
+    background: var(--navy-card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px;
+  }
+  .role-icon { font-size: 22px; flex-shrink: 0; }
+  .role-name { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 3px; }
+  .role-desc { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+
+  /* Story card */
+  .story-card {
+    background: var(--navy-card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; display: flex; align-items: center; gap: 10px;
+  }
+  .story-badge {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    padding: 2px 8px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(46,196,182,0.15); color: var(--teal); border: 1px solid rgba(46,196,182,0.3);
+  }
+  .story-name { font-size: 13px; color: var(--text); font-family: 'Cascadia Code','Fira Code','Courier New',monospace; }
+
+  /* Anti-pattern */
+  .anti-card {
+    background: rgba(230,57,70,0.07); border: 1px solid rgba(230,57,70,0.25);
+    border-radius: 8px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .anti-title { font-size: 13px; font-weight: 700; color: var(--red); margin-bottom: 4px; }
+  .anti-desc  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+<div id="wrapper">
+<div id="deck">
+
+<-s SLIDE 1 — COVER -->
+<div class="slide cover active" id="s1">
+  <div class="cover-left">
+    <div class="cover-tag">Day 4 of 4</div>
+    <div class="cover-title">Design<br><span>Literacy</span>,<br>Review &amp;<br>Mini-Project</div>
+    <div class="cover-subtitle">Reading design specs, facilitating design reviews,<br>locking scope, and living documentation with Storybook.</div>
+    <div class="cover-meta">
+      <div class="cover-meta-item"><span class="cover-meta-label">Duration</span><span class="cover-meta-value">8 Hours</span></div>
+      <div class="cover-meta-item"><span class="cover-meta-label">Sessions</span><span class="cover-meta-value">3 + Mini-Project</span></div>
+      <div class="cover-meta-item"><span class="cover-meta-label">Level</span><span class="cover-meta-value">Mid-Level Dev</span></div>
+    </div>
+  </div>
+  <div class="cover-right">
+    <div>
+      <div class="cover-agenda-title">Today's Agenda</div>
+      <div class="cover-agenda-item">
+        <div class="cover-agenda-num">1</div>
+        <div class="cover-agenda-text"><strong>Reading Design as a Developer</strong><br>UCD, wireframes, specs, design tokens, Pencil</div>
+      </div>
+      <div class="cover-agenda-item">
+        <div class="cover-agenda-num">2</div>
+        <div class="cover-agenda-text"><strong>Design Review &amp; Scope Lock</strong><br>Process, checklist, scope freeze, architecture validation</div>
+      </div>
+      <div class="cover-agenda-item">
+        <div class="cover-agenda-num">3</div>
+        <div class="cover-agenda-text"><strong>Storybook as Living Documentation</strong><br>Stories, Chromatic, designer–engineer bridge</div>
+      </div>
+      <div class="cover-agenda-item">
+        <div class="cover-agenda-num">4</div>
+        <div class="cover-agenda-text"><strong>Mini-Project + Final Presentations</strong><br>Full architecture &amp; scope lock challenge</div>
+      </div>
+    </div>
+    <div class="cover-logo">Software Engineering Training · Day 4</div>
+  </div>
+</div>
+
+<-s SLIDE 2 — SCHEDULE -->
+<div class="slide" id="s2">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Day at a Glance</span></div>
+    <div class="slide-title">Full Day <span class="highlight">Schedule</span></div>
+  </div>
+  <div class="timetable">
+    <div class="timetable-row"><span class="timetable-time">08:00 – 08:15</span><span class="timetable-dur">15 min</span><span class="timetable-name">Day 4 Opening &amp; Day 3 Recap</span><span class="timetable-type">Facilitation</span></div>
+    <div class="timetable-row"><span class="timetable-time">08:15 – 09:45</span><span class="timetable-dur">90 min</span><span class="timetable-name">Session 1 — Reading Design as a Developer</span><span class="timetable-type">Lecture + Workshop</span></div>
+    <div class="timetable-row break"><span class="timetable-time">09:45 – 10:00</span><span class="timetable-dur">15 min</span><span class="timetable-name">☕ Break</span><span class="timetable-type">—</span></div>
+    <div class="timetable-row"><span class="timetable-time">10:00 – 11:30</span><span class="timetable-dur">90 min</span><span class="timetable-name">Session 2 — Design Review &amp; Scope Lock</span><span class="timetable-type">Lecture + Simulation</span></div>
+    <div class="timetable-row break"><span class="timetable-time">11:30 – 12:30</span><span class="timetable-dur">60 min</span><span class="timetable-name">🍽 Lunch</span><span class="timetable-type">—</span></div>
+    <div class="timetable-row"><span class="timetable-time">12:30 – 13:30</span><span class="timetable-dur">60 min</span><span class="timetable-name">Session 3 — Storybook as Living Documentation <em style="font-size:11px;color:var(--muted)">(Supplement)</em></span><span class="timetable-type">Lecture + Demo</span></div>
+    <div class="timetable-row break"><span class="timetable-time">13:30 – 13:45</span><span class="timetable-dur">15 min</span><span class="timetable-name">☕ Break</span><span class="timetable-type">—</span></div>
+    <div class="timetable-row"><span class="timetable-time">13:45 – 15:45</span><span class="timetable-dur">120 min</span><span class="timetable-name">Mini-Project — Full Architecture &amp; Scope Lock</span><span class="timetable-type">Capstone Workshop</span></div>
+    <div class="timetable-row break"><span class="timetable-time">15:45 – 16:00</span><span class="timetable-dur">15 min</span><span class="timetable-name">☕ Break</span><span class="timetable-type">—</span></div>
+    <div class="timetable-row"><span class="timetable-time">16:00 – 16:45</span><span class="timetable-dur">45 min</span><span class="timetable-name">Final Presentations — 7 min per group</span><span class="timetable-type">Showcase</span></div>
+    <div class="timetable-row"><span class="timetable-time">16:45 – 17:00</span><span class="timetable-dur">15 min</span><span class="timetable-name">Program Closing &amp; Certificates</span><span class="timetable-type">Closing</span></div>
+  </div>
+</div>
+
+<-s SLIDE 3 — S1 BREAK -->
+<div class="slide section-break" id="s3">
+  <div class="section-num">1</div>
+  <div class="section-label">Session 1 · 08:15 – 09:45</div>
+  <div class="section-title">📐 Reading Design<br>as a Developer</div>
+  <div class="section-sub">User-Centered Design · Wireframes · Design Specs · Component States · Design Tokens · Pencil</div>
+  <div class="section-duration">⏱ 90 minutes · Lecture + Workshop</div>
+</div>
+
+<-s SLIDE 4 — UCD & THE COMMUNICATION GAP -->
+<div class="slide" id="s4">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 1</span></div>
+    <div class="slide-title">Why Developers Need to <span class="highlight">Read Design</span></div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="card">
+        <div class="card-title">The Communication Gap</div>
+        <table class="data-table" style="font-size:12px">
+          <thead><tr><th>Designer says</th><th>Developer hears</th></tr></thead>
+          <tbody>
+            <tr><td class="accent">"This should feel smooth"</td><td>"What's the animation duration &amp; easing?"</td></tr>
+            <tr><td class="accent">"Make it intuitive"</td><td>"What happens on edge cases?"</td></tr>
+            <tr><td class="accent">"Clean and minimal"</td><td>"What are the exact spacing values?"</td></tr>
+            <tr><td class="accent">"It should be responsive"</td><td>"Breakpoints? Column count? Image sizes?"</td></tr>
+            <tr><td class="accent">"Users will understand"</td><td>"What's the empty state?"</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="quote mt-12"><p>"Your job is NOT to become a designer. Your job is to <strong>understand</strong> design decisions well enough to implement them correctly and ask the right questions."</p></div>
+    </div>
+    <div class="col">
+      <div class="card-title" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:var(--teal);border-radius:2px;display:inline-block"></span>Developer's Job vs NOT Developer's Job</div>
+      <table class="data-table">
+        <thead><tr><th>✅ Developer's Job</th><th>❌ NOT Developer's Job</th></tr></thead>
+        <tbody>
+          <tr><td class="good">Implement the design accurately</td><td class="bad">Decide which color to use</td></tr>
+          <tr><td class="good">Ask about edge cases</td><td class="bad">Redesign the user flow</td></tr>
+          <tr><td class="good">Flag implementation challenges</td><td class="bad">"I think this looks better"</td></tr>
+          <tr><td class="good">Ensure accessibility</td><td class="bad">Skip designs because "it's too hard"</td></tr>
+          <tr><td class="good">Suggest technical constraints</td><td class="bad">Ignore the design spec</td></tr>
+        </tbody>
+      </table>
+      <div class="card teal mt-12" style="padding:14px 18px">
+        <div class="card-title">User-Centered Design — Why Decisions Are Made</div>
+        <div class="grid-2" style="gap:8px;margin-top:4px">
+          <div style="font-size:12px"><strong style="color:var(--accent)">Primary button = blue</strong><br><span style="color:var(--muted)">Blue has highest click-through in tests → need a color system, not hardcoded hex</span></div>
+          <div style="font-size:12px"><strong style="color:var(--accent)">Form has 3 steps</strong><br><span style="color:var(--muted)">Chunking improves completion → need step navigation &amp; state persistence</span></div>
+          <div style="font-size:12px"><strong style="color:var(--accent)">Error messages inline</strong><br><span style="color:var(--muted)">Users miss top-of-page errors → field-level validation needed</span></div>
+          <div style="font-size:12px"><strong style="color:var(--accent)">Modal for delete</strong><br><span style="color:var(--muted)">Destructive actions need friction → modal + focus trap + keyboard support</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 5 — DESIGN DELIVERABLES -->
+<div class="slide" id="s5">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 1</span></div>
+    <div class="slide-title">Design <span class="highlight">Deliverables</span> — What You'll Receive</div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="card amber" style="padding:16px 20px">
+        <div class="card-title">Level 1 — Wireframes (Low-Fidelity)</div>
+        <div style="font-family:'Cascadia Code','Courier New',monospace;font-size:10px;color:var(--muted);background:#0a1628;border-radius:6px;padding:10px 12px;margin-bottom:10px;line-height:1.6">┌─────────────────────────────────┐<br>│ Logo    [Search...]   [Login]   │<br>├─────────────────────────────────┤<br>│ ┌──────┐ ┌──────┐ ┌──────┐   │<br>│ │      │ │      │ │      │   │<br>│ │Card 1│ │Card 2│ │Card 3│   │<br>│ │[Btn] │ │[Btn] │ │[Btn] │   │<br>│ └──────┘ └──────┘ └──────┘   │<br>└─────────────────────────────────┘</div>
+        <ul class="bullets sm">
+          <li>Layout structure &amp; component hierarchy</li>
+          <li>Navigation &amp; content priority</li>
+          <li><strong>Ask:</strong> 0 cards? 100 cards? Mobile layout?</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card teal" style="padding:16px 20px">
+        <div class="card-title">Level 2 — Mockups (High-Fidelity)</div>
+        <ul class="bullets sm" style="margin-bottom:10px">
+          <li>Exact colors, fonts, spacing — design tokens</li>
+          <li>Real content (not Lorem Ipsum)</li>
+          <li>All component states: hover, error, disabled</li>
+          <li>Responsive breakpoints defined</li>
+        </ul>
+        <div style="font-size:12px;color:var(--muted)"><strong style="color:var(--teal)">Extract:</strong> spacing values, color palette, typography scale, interactive states</div>
+      </div>
+      <div class="card mt-12" style="padding:16px 20px">
+        <div class="card-title">Level 3 — Prototypes (Interactive)</div>
+        <ul class="bullets sm">
+          <li>Navigation flow between screens</li>
+          <li>Animations, transitions, micro-interactions</li>
+          <li>Loading states &amp; error recovery flows</li>
+          <li><strong>Extract:</strong> animation timing, state transitions, loading patterns</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-40">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Component States Checklist</div>
+      <div class="state-grid">
+        <div class="state-item"><div class="state-dot" style="background:#2DC653"></div><div><div class="state-name">Default</div><div class="state-desc">Normal display</div></div></div>
+        <div class="state-item"><div class="state-dot" style="background:#E8A020"></div><div><div class="state-name">Hover</div><div class="state-desc">Mouse over</div></div></div>
+        <div class="state-item"><div class="state-dot" style="background:#2EC4B6"></div><div><div class="state-name">Focus</div><div class="state-desc">Keyboard nav</div></div></div>
+        <div class="state-item"><div class="state-dot" style="background:#569cd6"></div><div><div class="state-name">Active</div><div class="state-desc">Being pressed</div></div></div>
+        <div class="state-item"><div class="state-dot" style="background:#E63946"></div><div><div class="state-name">Error</div><div class="state-desc">Validation fail</div></div></div>
+        <div class="state-item"><div class="state-dot" style="background:#5c7a9e"></div><div><div class="state-name">Disabled</div><div class="state-desc">Not available</div></div></div>
+        <div class="state-item"><div class="state-dot" style="background:#9B59B6"></div><div><div class="state-name">Loading</div><div class="state-desc">Async pending</div></div></div>
+        <div class="state-item"><div class="state-dot" style="background:#8FA3BC"></div><div><div class="state-name">Empty</div><div class="state-desc">No data</div></div></div>
+      </div>
+      <div class="quote mt-12" style="padding:10px 14px"><p style="font-size:12px">⚠️ If a state is not designed, ask before you code it. Don't invent states.</p></div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 6 — DESIGN TOKENS & TOOLS -->
+<div class="slide" id="s6">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 1</span></div>
+    <div class="slide-title">Design <span class="highlight">Tokens</span> &amp; Tools</div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="card amber" style="padding:16px 20px">
+        <div class="card-title">Design Tokens — The Shared Language</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Named variables that both Figma and code share. The bridge between designer and engineer.</p>
+        <div class="code-panel" style="font-size:10.5px">
+<span class="cm">/* Exported from Figma / Pencil → CSS */</span><br>
+:root {<br>
+&nbsp; <span class="cm">/* Colors */</span><br>
+&nbsp; --color-primary-500:   <span class="st">#0066FF</span>;<br>
+&nbsp; --color-error-500:     <span class="st">#DC2626</span>;<br>
+&nbsp; --color-success-500:   <span class="st">#16A34A</span>;<br>
+&nbsp; <span class="cm">/* Spacing */</span><br>
+&nbsp; --spacing-xs: <span class="st">4px</span>; --spacing-sm: <span class="st">8px</span>;<br>
+&nbsp; --spacing-md: <span class="st">16px</span>; --spacing-lg: <span class="st">24px</span>;<br>
+&nbsp; <span class="cm">/* Typography */</span><br>
+&nbsp; --font-size-sm: <span class="st">12px</span>; --font-size-md: <span class="st">14px</span>;<br>
+&nbsp; --font-size-xl: <span class="st">20px</span>; --font-size-2xl: <span class="st">24px</span>;<br>
+&nbsp; <span class="cm">/* Radius */</span><br>
+&nbsp; --radius-sm: <span class="st">4px</span>; --radius-card: <span class="st">8px</span>;<br>
+}
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card teal" style="padding:10px 14px;margin-bottom:8px">
+        <div class="card-title">Pencil — Design-Developer Bridge</div>
+        <table class="data-table" style="font-size:11px">
+          <thead><tr><th>Feature</th><th>Benefit for Developers</th></tr></thead>
+          <tbody>
+            <tr><td>Design-to-code inspection</td><td>Extract exact CSS values, spacing, colors</td></tr>
+            <tr><td>Component specifications</td><td>See props, states, and variants</td></tr>
+            <tr><td>Design token export</td><td>Get CSS vars, JS objects, JSON, SCSS</td></tr>
+            <tr><td>Responsive preview</td><td>See designs at different breakpoints</td></tr>
+            <tr><td>Annotation &amp; comments</td><td>Ask questions directly on the design</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="padding:10px 14px">
+        <div class="card-title">Responsive Breakpoints — Always Ask</div>
+        <div style="display:flex;gap:10px;align-items:flex-end;margin-top:6px">
+          <div style="text-align:center;flex:3"><div style="background:rgba(46,196,182,0.12);border:1px solid rgba(46,196,182,0.3);border-radius:4px;height:26px;margin-bottom:4px"></div><div style="font-size:10px;color:var(--teal)">Desktop ≥1024px</div><div style="font-size:9px;color:var(--muted)">4 columns</div></div>
+          <div style="text-align:center;flex:2"><div style="background:rgba(232,160,32,0.12);border:1px solid rgba(232,160,32,0.3);border-radius:4px;height:18px;margin-bottom:4px"></div><div style="font-size:10px;color:var(--accent)">Tablet 768–1023px</div><div style="font-size:9px;color:var(--muted)">2 columns</div></div>
+          <div style="text-align:center;flex:1"><div style="background:rgba(230,57,70,0.12);border:1px solid rgba(230,57,70,0.3);border-radius:4px;height:12px;margin-bottom:4px"></div><div style="font-size:10px;color:var(--red)">Mobile &lt;768px</div><div style="font-size:9px;color:var(--muted)">1 column</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-40">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Using Pencil — 4 Steps</div>
+      <div class="steps" style="flex-direction:column;gap:6px">
+        <div class="step-item" style="text-align:left;padding:10px 14px;display:flex;gap:10px;align-items:flex-start">
+          <div class="step-num" style="margin:0;flex-shrink:0">1</div>
+          <div><div class="step-title">Inspect the Design</div><div class="step-desc">Click any element: dimensions, position, typography, colors, borders, shadows</div></div>
+        </div>
+        <div class="step-item" style="text-align:left;padding:10px 14px;display:flex;gap:10px;align-items:flex-start">
+          <div class="step-num" style="margin:0;flex-shrink:0">2</div>
+          <div><div class="step-title">Extract Design Tokens</div><div class="step-desc">Export as CSS custom properties, JS objects, JSON, or SCSS</div></div>
+        </div>
+        <div class="step-item" style="text-align:left;padding:10px 14px;display:flex;gap:10px;align-items:flex-start">
+          <div class="step-num" style="margin:0;flex-shrink:0">3</div>
+          <div><div class="step-title">Understand Component Structure</div><div class="step-desc">See hierarchy: ProductCard → ImageContainer → WishlistButton</div></div>
+        </div>
+        <div class="step-item" style="text-align:left;padding:10px 14px;display:flex;gap:10px;align-items:flex-start">
+          <div class="step-num" style="margin:0;flex-shrink:0">4</div>
+          <div><div class="step-title">Check Interactive Behavior</div><div class="step-desc">Click through user flow, note state transitions, verify empty &amp; error states</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 7 — 10 QUESTIONS + MISSING SPECS -->
+<div class="slide" id="s7">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 1</span></div>
+    <div class="slide-title">The Developer's <span class="highlight">10 Questions</span> Before Coding</div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Ask these <strong style="color:var(--accent)">before writing a single line of code.</strong> These are not optional — they prevent mid-sprint surprises.</p>
+      <div class="grid-2" style="gap:8px">
+        <div class="concept-card"><div class="concept-card-label">1. Layout</div><div class="concept-card-desc">Overall structure? Responsive breakpoints? Grid system?</div></div>
+        <div class="concept-card"><div class="concept-card-label">2. Components</div><div class="concept-card-desc">What reusable components? All states? Existing reuse?</div></div>
+        <div class="concept-card"><div class="concept-card-label">3. Content</div><div class="concept-card-desc">Empty state? Very long content? Loading state?</div></div>
+        <div class="concept-card"><div class="concept-card-label">4. Interaction</div><div class="concept-card-desc">Clickable elements? Hover/focus/active? Animations?</div></div>
+        <div class="concept-card"><div class="concept-card-label">5. Edge Cases</div><div class="concept-card-desc">Error state per form? Slow network? Unauthorized user?</div></div>
+        <div class="concept-card"><div class="concept-card-label">6. Accessibility</div><div class="concept-card-desc">Tab order? ARIA labels? WCAG color contrast?</div></div>
+        <div class="concept-card"><div class="concept-card-label">7. Data</div><div class="concept-card-desc">Data needed from API? Refresh? Pagination?</div></div>
+        <div class="concept-card"><div class="concept-card-label">8. Navigation</div><div class="concept-card-desc">How to get here? Where to go? Back button?</div></div>
+        <div class="concept-card"><div class="concept-card-label">9. Performance</div><div class="concept-card-desc">Lazy loading? Code splitting? Caching?</div></div>
+        <div class="concept-card"><div class="concept-card-label">10. Missing Specs</div><div class="concept-card-desc">What's NOT in the design? What did designer assume?</div></div>
+      </div>
+    </div>
+    <div class="col-40">
+      <div style="font-size:12px;font-weight:700;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Common Missing Specs</div>
+      <table class="data-table" style="font-size:11.5px">
+        <thead><tr><th>Often Missing</th><th>What to Ask</th></tr></thead>
+        <tbody>
+          <tr><td>Empty states</td><td>"Page with no data?"</td></tr>
+          <tr><td>Loading states</td><td>"While data is loading?"</td></tr>
+          <tr><td>Error states</td><td>"When API fails?"</td></tr>
+          <tr><td>Long content</td><td>"Title is 200 characters?"</td></tr>
+          <tr><td>Offline state</td><td>"Without internet?"</td></tr>
+          <tr><td>Permission states</td><td>"What does a viewer see?"</td></tr>
+          <tr><td>Animation specs</td><td>"Duration and easing?"</td></tr>
+          <tr><td>Keyboard navigation</td><td>"Focus order?"</td></tr>
+        </tbody>
+      </table>
+      <div class="card red mt-12" style="padding:12px 16px">
+        <div class="card-title">Blockers vs Nice-to-Know</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:6px">Classify each question before asking:</p>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;background:rgba(230,57,70,0.1);border:1px solid rgba(230,57,70,0.3);border-radius:6px;padding:8px 10px;font-size:11px"><strong style="color:var(--red)">🚫 Blocker</strong><br><span style="color:var(--muted)">Cannot code without answer</span></div>
+          <div style="flex:1;background:rgba(46,196,182,0.08);border:1px solid rgba(46,196,182,0.25);border-radius:6px;padding:8px 10px;font-size:11px"><strong style="color:var(--teal)">💡 Nice-to-Know</strong><br><span style="color:var(--muted)">Can proceed, refine later</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 8 — WORKSHOP S1 -->
+<div class="slide" id="s8">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 1 · Workshop</span></div>
+    <div class="slide-title">Workshop: <span class="highlight">Read a Design, Generate Questions</span></div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="card amber" style="padding:16px 20px">
+        <div class="card-title">Scenario</div>
+        <p style="font-size:13px;color:var(--text);margin-bottom:10px">You receive a Figma screenshot of an <strong>Order Management Screen</strong> with:</p>
+        <ul class="bullets sm">
+          <li>Sidebar navigation (collapsible on mobile)</li>
+          <li>Stats cards at the top (4 cards in a row)</li>
+          <li>Data table with order list, search, filters, pagination</li>
+          <li>Quick action buttons per row (View, Edit, Cancel)</li>
+          <li>Notification bell with unread badge counter</li>
+        </ul>
+      </div>
+      <div class="card mt-12" style="padding:16px 20px">
+        <div class="card-title">Expected Output</div>
+        <p style="font-size:12px;color:var(--muted)">A <strong style="color:var(--text)">pre-implementation checklist</strong> that prevents mid-sprint surprises. This is what a senior developer delivers before touching a keyboard.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="workshop-tasks">
+        <div class="task-item">
+          <div class="task-num">1</div>
+          <div class="task-body">
+            <div class="task-title">List Every Component State</div>
+            <div class="task-desc">For each component visible or implied (table, button, notification bell, stats card) — list all possible states: default, hover, loading, empty, error, disabled. Don't skip the notification bell with 0 unread vs 99+ unread.</div>
+          </div>
+          <div class="task-time">10 min</div>
+        </div>
+        <div class="task-item">
+          <div class="task-num">2</div>
+          <div class="task-body">
+            <div class="task-title">List Every Question for the Designer</div>
+            <div class="task-desc">Use the 10-question framework. Focus on edge cases, missing states, and missing specs. What does the table look like with 0 rows? With 500 rows? Mobile sidebar behavior?</div>
+          </div>
+          <div class="task-time">10 min</div>
+        </div>
+        <div class="task-item">
+          <div class="task-num">3</div>
+          <div class="task-body">
+            <div class="task-title">Classify: Blocker vs Nice-to-Know</div>
+            <div class="task-desc">For each question, mark: <span style="color:var(--red)">🚫 Blocker</span> (cannot code without it) or <span style="color:var(--teal)">💡 Nice-to-Know</span> (can proceed and refine later). Prioritize your design review conversation.</div>
+          </div>
+          <div class="task-time">10 min</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <span class="pill pill-orange">Groups of 3–4</span>
+        <span class="pill pill-teal">30 minutes total</span>
+        <span class="pill pill-green">Share back 1 blocker per group</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 9 — S2 BREAK -->
+<div class="slide section-break" id="s9">
+  <div class="section-num">2</div>
+  <div class="section-label">Session 2 · 10:00 – 11:30</div>
+  <div class="section-title">🔍 Design Review<br>&amp; Scope Lock</div>
+  <div class="section-sub">Structured Review Process · Roles &amp; Rules · Scope Lock · Architecture Validation · Anti-Patterns</div>
+  <div class="section-duration">⏱ 90 minutes · Lecture + Simulation</div>
+</div>
+
+<-s SLIDE 10 — WHAT IS DESIGN REVIEW -->
+<div class="slide" id="s10">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 2</span></div>
+    <div class="slide-title">What Is a <span class="highlight">Design Review</span>?</div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="quote mb-12"><p>"A Design Review is a structured meeting where a team evaluates a proposed design — architecture, API, UI, or code — <strong>before implementation begins</strong>."</p></div>
+      <div class="card red" style="padding:14px 18px;margin-bottom:14px">
+        <div class="card-title">Review is NOT vs IS</div>
+        <div class="grid-2" style="gap:8px;margin-top:4px">
+          <div style="font-size:12px"><span class="text-red font-bold">❌ Finding fault</span><br><span class="text-red font-bold">❌ Proving you're smarter</span><br><span class="text-red font-bold">❌ Blocking progress</span><br><span class="text-red font-bold">❌ Debating preferences</span><br><span class="text-red font-bold">❌ A formality to check off</span></div>
+          <div style="font-size:12px"><span class="text-green font-bold">✅ Finding gaps</span><br><span class="text-green font-bold">✅ Ensuring completeness</span><br><span class="text-green font-bold">✅ Preventing rework</span><br><span class="text-green font-bold">✅ Validating requirements</span><br><span class="text-green font-bold">✅ Collaborative problem-solving</span></div>
+        </div>
+      </div>
+      <div class="card teal" style="padding:14px 18px">
+        <div class="card-title">Cost of Changes by Phase</div>
+        <div style="font-size:12px;margin-top:4px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="color:var(--muted);width:100px;font-size:11px">Design Phase</span><div style="height:12px;background:rgba(46,196,182,0.6);border-radius:3px;width:10%"></div><span style="color:var(--teal);margin-left:4px;font-size:11px">$1</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="color:var(--muted);width:100px;font-size:11px">Development</span><div style="height:12px;background:rgba(232,160,32,0.7);border-radius:3px;width:40%"></div><span style="color:var(--accent);margin-left:4px;font-size:11px">$5</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="color:var(--muted);width:100px;font-size:11px">Testing</span><div style="height:12px;background:rgba(155,89,182,0.7);border-radius:3px;width:70%"></div><span style="color:var(--purple);margin-left:4px;font-size:11px">$10</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="color:var(--muted);width:100px;font-size:11px">Production</span><div style="height:12px;background:rgba(230,57,70,0.7);border-radius:3px;width:100%"></div><span style="color:var(--red);margin-left:4px;font-size:11px">$25+</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Review Roles</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        <div class="role-card"><div class="role-icon">✍️</div><div><div class="role-name">Author</div><div class="role-desc">Presents the design, answers questions. The person or team who created the design.</div></div></div>
+        <div class="role-card"><div class="role-icon">🎯</div><div><div class="role-name">Moderator</div><div class="role-desc">Keeps discussion on track, manages time. Usually tech lead or senior developer.</div></div></div>
+        <div class="role-card"><div class="role-icon">🔍</div><div><div class="role-name">Reviewers (2–4)</div><div class="role-desc">Ask questions, raise concerns. Developer, QA, Product Owner, Designer — different lenses.</div></div></div>
+        <div class="role-card"><div class="role-icon">📝</div><div><div class="role-name">Scribe</div><div class="role-desc">Documents decisions and action items. Any team member.</div></div></div>
+      </div>
+      <div class="card" style="padding:12px 16px">
+        <div class="card-title">Review Ground Rules</div>
+        <ul class="bullets sm">
+          <li>Critique the design, not the person</li>
+          <li>Ask questions, don't make statements — "How would this handle 10k users?" not "This won't scale"</li>
+          <li>Bring alternatives, not just criticism</li>
+          <li>Focus on requirements, not preferences</li>
+          <li>Time-box discussions — if &gt;5 min, take it offline</li>
+          <li>Document everything: decisions, action items, rationale</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 11 — REVIEW PROCESS & TYPES -->
+<div class="slide" id="s11">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 2</span></div>
+    <div class="slide-title">The Design Review <span class="highlight">Process</span> &amp; Types</div>
+  </div>
+  <div class="cols">
+    <div class="col-40">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Before / During / After</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="background:rgba(46,196,182,0.08);border:1px solid rgba(46,196,182,0.25);border-radius:8px;padding:12px 14px">
+          <div style="font-size:11px;font-weight:700;color:var(--teal);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Before the Review</div>
+          <ul class="bullets sm" style="margin-bottom:0">
+            <li>Author shares design doc 24h before</li>
+            <li>Reviewers read and prepare questions</li>
+            <li>Author prepares 5-min walkthrough</li>
+          </ul>
+        </div>
+        <div style="background:rgba(232,160,32,0.08);border:1px solid rgba(232,160,32,0.25);border-radius:8px;padding:12px 14px">
+          <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">During the Review (45–60 min max)</div>
+          <ul class="bullets sm" style="margin-bottom:0">
+            <li>Author presents design (5–10 min)</li>
+            <li>Clarifying questions (10 min)</li>
+            <li>Concern discussion (20–30 min)</li>
+            <li>Action items &amp; decisions (5–10 min)</li>
+          </ul>
+        </div>
+        <div style="background:rgba(45,198,83,0.08);border:1px solid rgba(45,198,83,0.25);border-radius:8px;padding:12px 14px">
+          <div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">After the Review</div>
+          <ul class="bullets sm" style="margin-bottom:0">
+            <li>Author updates design based on feedback</li>
+            <li>Action items tracked as tickets</li>
+            <li>Updated design shared for async confirmation</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div style="font-size:12px;font-weight:700;color:var(--teal);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Architecture Review Checklist</div>
+      <table class="data-table" style="font-size:12px;margin-bottom:12px">
+        <thead><tr><th>Aspect</th><th>Question to Ask</th></tr></thead>
+        <tbody>
+          <tr><td>Problem fit</td><td>Does this architecture solve the stated problem?</td></tr>
+          <tr><td>Scalability</td><td>Can this handle 10x current load?</td></tr>
+          <tr><td>Security</td><td>Are we following least privilege &amp; defense in depth?</td></tr>
+          <tr><td>Maintainability</td><td>Can a new team member understand this in a week?</td></tr>
+          <tr><td>Failure modes</td><td>What happens when Component X fails?</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:12px;font-weight:700;color:var(--purple);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">UI/UX Review — Developer Perspective</div>
+      <table class="data-table" style="font-size:12px">
+        <thead><tr><th>Aspect</th><th>Question to Ask</th></tr></thead>
+        <tbody>
+          <tr><td>Missing states</td><td>Are all component states designed? Empty, loading, error?</td></tr>
+          <tr><td>Edge cases</td><td>What about overflow, zero values, max items?</td></tr>
+          <tr><td>Accessibility</td><td>Keyboard navigation? Screen reader support?</td></tr>
+          <tr><td>Data mapping</td><td>Can the API provide the data this screen needs?</td></tr>
+          <tr><td>Feasibility</td><td>Can this be built with our current tech stack?</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 12 — SCOPE LOCK -->
+<div class="slide" id="s12">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 2</span></div>
+    <div class="slide-title">Scope Lock 🔒 — Build <span class="highlight">Exactly What Was Agreed</span></div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="quote mb-12"><p>"<strong>Scope Lock</strong> is the practice of freezing feature scope after design review — ensuring the team builds exactly what was agreed. Nothing more, nothing less."</p></div>
+      <div class="card red" style="padding:14px 18px;margin-bottom:12px">
+        <div class="card-title">Without Scope Lock</div>
+        <div style="font-family:'Cascadia Code','Courier New',monospace;font-size:11px;line-height:1.8;color:var(--muted)">
+          Day 1: "Let's build a login page"<br>
+          Day 3: <span style="color:var(--red)">"Let's also add social login"</span><br>
+          Day 5: <span style="color:var(--red)">"Let's add two-factor authentication"</span><br>
+          Day 8: <span style="color:var(--red)">"Let's add biometric login"</span><br>
+          Day 10: <span style="color:var(--red)">"Why isn't the login page done yet?"</span>
+        </div>
+      </div>
+      <div class="card green" style="padding:14px 18px">
+        <div class="card-title">With Scope Lock</div>
+        <div style="font-family:'Cascadia Code','Courier New',monospace;font-size:11px;line-height:1.8;color:var(--muted)">
+          Day 1: <span style="color:var(--green)">"Scope: email/password login + forgot password"</span><br>
+          Day 3: "Social login is out of scope → ticket for Sprint 3"<br>
+          Day 5: <span style="color:var(--green)">"Login page done, tested, deployed ✅"</span><br>
+          Day 6: "Sprint 2 starts with next prioritized feature"
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Sprint 1 — E-Commerce Login Example</div>
+      <div class="scope-box scope-in">
+        <div class="scope-icon">✅</div>
+        <div><span class="scope-label" style="color:var(--green)">In Scope (must-have)</span><div class="scope-items">Email/password login · Forgot password · Session management · JWT tokens · Login form validation · "Remember me" checkbox · Error messages inline</div></div>
+      </div>
+      <div class="scope-box scope-out">
+        <div class="scope-icon">🚫</div>
+        <div><span class="scope-label" style="color:var(--red)">Out of Scope (not in this sprint)</span><div class="scope-items">Social login (Google/Facebook) · Biometric authentication · Two-factor authentication · SSO/SAML · Magic link login</div></div>
+      </div>
+      <div class="scope-box scope-defer">
+        <div class="scope-icon">⏩</div>
+        <div><span class="scope-label" style="color:var(--accent)">Deferred (future sprint — ticket created)</span><div class="scope-items">OAuth2 social login → Sprint 3 (ticket #147) · 2FA → Sprint 5 (ticket #201) · Biometric → Sprint 7 (ticket #289)</div></div>
+      </div>
+      <div class="card mt-12" style="padding:12px 16px">
+        <div class="card-title">Handling Scope Change Requests</div>
+        <p style="font-size:12px;color:var(--muted)">When "Can we also add social login?" comes in:</p>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <div style="flex:1;background:rgba(230,57,70,0.08);border:1px solid rgba(230,57,70,0.25);border-radius:6px;padding:8px 10px;font-size:11px"><strong style="color:var(--red)">Is it critical for launch?</strong><br><span style="color:var(--muted)">YES: estimate delay, team decides</span></div>
+          <div style="flex:1;background:rgba(46,196,182,0.08);border:1px solid rgba(46,196,182,0.25);border-radius:6px;padding:8px 10px;font-size:11px"><strong style="color:var(--teal)">Not critical?</strong><br><span style="color:var(--muted)">Add to backlog → prioritize for future sprint</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 13 — ARCHITECTURE VALIDATION + ANTI-PATTERNS -->
+<div class="slide" id="s13">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 2</span></div>
+    <div class="slide-title">Architecture Validation &amp; <span class="highlight">Anti-Patterns</span></div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="quote mb-12"><p>"Architecture that does not answer the problem statement is wrong, <strong>no matter how technically sound</strong>."</p></div>
+      <div class="card teal" style="padding:14px 18px;margin-bottom:12px">
+        <div class="card-title">Common Architecture–Problem Mismatches</div>
+        <table class="data-table" style="font-size:11.5px">
+          <thead><tr><th>Problem</th><th>Wrong</th><th>Right</th></tr></thead>
+          <tbody>
+            <tr><td>"Fast reads, rare writes"</td><td class="bad">Write-optimized DB</td><td class="good">Read replicas, caching</td></tr>
+            <tr><td>"10 users, internal tool"</td><td class="bad">Kubernetes, microservices</td><td class="good">Simple monolith, SQLite</td></tr>
+            <tr><td>"Real-time collaboration"</td><td class="bad">REST polling</td><td class="good">WebSockets, CRDTs</td></tr>
+            <tr><td>"1M records nightly"</td><td class="bad">Real-time streaming</td><td class="good">Batch processing, queue</td></tr>
+            <tr><td>"Simple CRUD app"</td><td class="bad">Event sourcing, CQRS</td><td class="good">Standard MVC, PostgreSQL</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card amber" style="padding:12px 16px">
+        <div class="card-title">YAGNI — You Aren't Gonna Need It</div>
+        <p style="font-size:12px;color:var(--muted)">Don't build for imagined future requirements. When (IF) multi-tenancy is needed, refactor then — you'll have more information about the actual requirements.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div style="font-size:12px;font-weight:700;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Anti-Patterns in Design Review &amp; Scope</div>
+      <div class="anti-card">
+        <div class="anti-title">🚲 Bikeshedding</div>
+        <div class="anti-desc">Spending 30 min debating "should the button be blue or green?" while ignoring the missing error state. Fix: "Let's follow the design system. Moving on."</div>
+      </div>
+      <div class="anti-card">
+        <div class="anti-title">👥 Design by Committee</div>
+        <div class="anti-desc">Everyone has a say, no one makes a decision — "let's discuss more next week" repeated for 4 weeks. Fix: "Tech lead decides by end of day. We build tomorrow."</div>
+      </div>
+      <div class="anti-card">
+        <div class="anti-title">✨ Gold-Plating</div>
+        <div class="anti-desc">Requirements: "Users can upload a profile picture" → Implemented: AI-powered cropping, 12 filters, real-time optimization pipeline. Fix: JPEG/PNG, max 5MB, resize to 200×200, store in S3.</div>
+      </div>
+      <div class="anti-card" style="margin-bottom:0">
+        <div class="anti-title">🧊 Analysis Paralysis</div>
+        <div class="anti-desc">"We need to evaluate 15 databases before choosing one" → 3 months of evaluation, still no decision. Fix: "PostgreSQL meets all current requirements. We can migrate if needed. Let's build."</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 14 — S3 BREAK -->
+<div class="slide section-break" id="s14">
+  <div class="section-num">3</div>
+  <div class="section-label">Session 3 · 12:30 – 13:30 · Supplement</div>
+  <div class="section-title">📚 Storybook as<br>Living Documentation</div>
+  <div class="section-sub">Stories · Component States · Visual Regression · Chromatic · Designer–Engineer Bridge · Design Tokens</div>
+  <div class="section-duration">⏱ 60 minutes · Lecture + Demo</div>
+</div>
+
+<-s SLIDE 15 — WHAT IS STORYBOOK -->
+<div class="slide" id="s15">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 3</span></div>
+    <div class="slide-title">What Is <span class="highlight">Storybook</span>?</div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="quote mb-12"><p>"Storybook is a frontend workshop for building UI components and pages <strong>in isolation</strong>."</p></div>
+      <div class="card red" style="padding:14px 18px;margin-bottom:12px">
+        <div class="card-title">Without Storybook</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:6px"><strong style="color:var(--red)">❌</strong> Developer: "I built it, please review"<br>Reviewer: Opens full app, navigates to page, struggles to trigger error state<br>Result: <strong style="color:var(--red)">Edge cases never reviewed, bugs reach production</strong></p>
+      </div>
+      <div class="card green" style="padding:14px 18px;margin-bottom:12px">
+        <div class="card-title">With Storybook</div>
+        <p style="font-size:12px;color:var(--muted)"><strong style="color:var(--green)">✅</strong> Developer: "Here is the Storybook link, check all 6 states"<br>Reviewer: Opens Storybook, clicks: Default, Loading, Empty, Error, Overflow, Disabled<br>Result: <strong style="color:var(--green)">Every state reviewable before a single API call</strong></p>
+      </div>
+      <div class="card teal" style="padding:12px 16px">
+        <div class="card-title">Storybook in the Lifecycle</div>
+        <div class="bridge-row mt-8"><div class="bridge-box">Design<br><span style="font-size:10px;color:var(--muted)">(Figma/Pencil)</span></div><div class="bridge-arrow">→</div><div class="bridge-box" style="border-color:rgba(46,196,182,0.4);background:rgba(46,196,182,0.08)">Component Stories<br><span style="font-size:10px;color:var(--teal)">← Design Review here</span></div></div>
+        <div class="bridge-row"><div class="bridge-box">Integration<br><span style="font-size:10px;color:var(--muted)">(Full App)</span></div><div class="bridge-arrow">→</div><div class="bridge-box">API Wired In</div></div>
+        <div class="bridge-row"><div class="bridge-box">QA / Testing</div></div>
+      </div>
+    </div>
+    <div class="col">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">A Story = One Component in One State</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Every component needs a story for <strong style="color:var(--text)">every state</strong>. If a state is not in Storybook, it has not been reviewed. If it has not been reviewed, it will become a bug.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">OrderCard — Required Stories</div>
+        <div class="story-card"><div class="story-badge">STORY</div><div class="story-name">OrderCard / <strong>Default</strong></div><span class="pill pill-green" style="margin-left:auto">Required</span></div>
+        <div class="story-card"><div class="story-badge">STORY</div><div class="story-name">OrderCard / <strong>Processing</strong></div><span class="pill pill-green" style="margin-left:auto">Required</span></div>
+        <div class="story-card"><div class="story-badge">STORY</div><div class="story-name">OrderCard / <strong>Shipped</strong></div><span class="pill pill-green" style="margin-left:auto">Required</span></div>
+        <div class="story-card"><div class="story-badge">STORY</div><div class="story-name">OrderCard / <strong>Cancelled</strong></div><span class="pill pill-green" style="margin-left:auto">Required</span></div>
+        <div class="story-card"><div class="story-badge">EDGE</div><div class="story-name">OrderCard / ⚠️ <strong>Long Customer Name</strong></div><span class="pill pill-orange" style="margin-left:auto">Edge Case</span></div>
+        <div class="story-card"><div class="story-badge">EDGE</div><div class="story-name">OrderCard / ⚠️ <strong>Many Items (20+)</strong></div><span class="pill pill-orange" style="margin-left:auto">Edge Case</span></div>
+        <div class="story-card"><div class="story-badge">EDGE</div><div class="story-name">OrderCard / ⚠️ <strong>Zero Total (Free Order)</strong></div><span class="pill pill-orange" style="margin-left:auto">Edge Case</span></div>
+      </div>
+      <div class="quote" style="padding:10px 14px"><p style="font-size:12px">⚠️ <strong>Design Review Rule:</strong> If a state is not in Storybook → not reviewed → will become a bug in production.</p></div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 16 — WRITING STORIES -->
+<div class="slide" id="s16">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 3</span></div>
+    <div class="slide-title">Writing <span class="highlight">Stories</span> — All States, All Edge Cases</div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div style="font-size:11px;font-weight:700;color:var(--teal);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Basic Story Structure (React + Storybook v8)</div>
+      <div class="code-panel" style="font-size:10.5px;flex:unset">
+<span class="cm">// OrderCard.stories.jsx</span><br>
+<span class="kw">import</span> { <span class="cl">OrderCard</span> } <span class="kw">from</span> <span class="st">'./OrderCard'</span>;<br><br>
+<span class="kw">export default</span> {<br>
+&nbsp; title: <span class="st">'Features/Orders/OrderCard'</span>,<br>
+&nbsp; component: <span class="cl">OrderCard</span>,<br>
+&nbsp; tags: [<span class="st">'autodocs'</span>],  <span class="cm">// auto-generates docs</span><br>
+};<br><br>
+<span class="cm">// Each named export = one Story</span><br>
+<span class="kw">export const</span> Default = {<br>
+&nbsp; args: { order: { id: <span class="st">'ORD-001'</span>, customerName: <span class="st">'Budi Santoso'</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; total: <span class="st">250000</span>, status: <span class="st">'confirmed'</span> } }<br>
+};<br>
+<span class="kw">export const</span> Processing = {<br>
+&nbsp; args: { order: { ...Default.args.order, status: <span class="st">'processing'</span> } }<br>
+};<br>
+<span class="kw">export const</span> LongCustomerName = {<br>
+&nbsp; name: <span class="st">'⚠️ Edge: Long Customer Name'</span>,<br>
+&nbsp; args: { order: { ...Default.args.order,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; customerName: <span class="st">'Muhammad Rizky Fahrurrozi Abdurrahman'</span> } }<br>
+};
+      </div>
+      <div class="code-panel mt-8" style="font-size:10.5px;flex:unset">
+<span class="cm">// OrderList — Loading, Empty, Error states</span><br>
+<span class="kw">export const</span> Loading = { args: { orders: [], isLoading: <span class="kw">true</span>, error: <span class="kw">null</span> } };<br>
+<span class="kw">export const</span> Empty   = { args: { orders: [], isLoading: <span class="kw">false</span>, error: <span class="kw">null</span> } };<br>
+<span class="kw">export const</span> Error   = { args: { orders: [], isLoading: <span class="kw">false</span>,<br>
+&nbsp; error: { message: <span class="st">'Failed to load orders. Please try again.'</span> } } };
+      </div>
+    </div>
+    <div class="col-45">
+      <div style="font-size:11px;font-weight:700;color:var(--purple);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Interactive Stories — Play Functions</div>
+      <div class="code-panel" style="font-size:10.5px;flex:unset">
+<span class="cm">// LoginForm.stories.jsx — automated interaction test</span><br>
+<span class="kw">import</span> { within, userEvent } <span class="kw">from</span> <span class="st">'@storybook/test'</span>;<br><br>
+<span class="kw">export const</span> SubmitWithValidation = {<br>
+&nbsp; name: <span class="st">'Submit → shows validation errors'</span>,<br>
+&nbsp; play: <span class="kw">async</span> ({ canvasElement }) => {<br>
+&nbsp;&nbsp;&nbsp; <span class="kw">const</span> canvas = within(canvasElement);<br>
+&nbsp;&nbsp;&nbsp; <span class="cm">// Click submit without filling fields</span><br>
+&nbsp;&nbsp;&nbsp; <span class="kw">await</span> userEvent.click(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; canvas.getByRole(<span class="st">'button'</span>, { name: <span class="st">/login/i</span> }));<br>
+&nbsp;&nbsp;&nbsp; <span class="cm">// Verify error messages appear</span><br>
+&nbsp;&nbsp;&nbsp; <span class="kw">await</span> canvas.findByText(<span class="st">'Email is required'</span>);<br>
+&nbsp;&nbsp;&nbsp; <span class="kw">await</span> canvas.findByText(<span class="st">'Password is required'</span>);<br>
+&nbsp; }<br>
+};
+      </div>
+      <div class="card amber mt-8" style="padding:12px 16px">
+        <div class="card-title">Storybook vs Static Mockups</div>
+        <table class="data-table" style="font-size:11px">
+          <thead><tr><th>Static Mockup (PDF)</th><th>Storybook</th></tr></thead>
+          <tbody>
+            <tr><td>Shows one perfect state</td><td class="good">Shows ALL states</td></tr>
+            <tr><td>Becomes outdated immediately</td><td class="good">Updates with code automatically</td></tr>
+            <tr><td>Cannot test interactions</td><td class="good">Play functions test clicks, typing</td></tr>
+            <tr><td>Hard to share</td><td class="good">URL-shareable with anyone</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 17 — VISUAL REGRESSION TESTING -->
+<div class="slide" id="s17">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 3</span></div>
+    <div class="slide-title">Visual Regression <span class="highlight">Testing</span></div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="card red" style="padding:14px 18px;margin-bottom:12px">
+        <div class="card-title">The Problem — Silent Visual Regressions</div>
+        <div class="steps" style="gap:8px">
+          <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Sprint 1:</strong> Designer approves the UI. Looks perfect.</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Sprint 3:</strong> Engineer updates the global CSS for performance.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Sprint 5:</strong> Designer opens the app — "This doesn't look right..."</div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Result:</strong> No test caught the visual change. Manual hunt begins.</div></div>
+        </div>
+      </div>
+      <div class="card teal" style="padding:14px 18px">
+        <div class="card-title">How Visual Regression Testing Works</div>
+        <div class="bridge-row mt-8">
+          <div class="bridge-box">📸 Baseline Screenshot<br><span style="font-size:10px;color:var(--muted)">taken &amp; stored</span></div>
+          <div class="bridge-arrow">→</div>
+          <div class="bridge-box">📸 New Screenshot<br><span style="font-size:10px;color:var(--muted)">after code change</span></div>
+          <div class="bridge-arrow">→</div>
+          <div class="bridge-box">🔍 Pixel Diff</div>
+        </div>
+        <div class="bridge-row">
+          <div class="bridge-box" style="border-color:rgba(230,57,70,0.4);background:rgba(230,57,70,0.08)">❌ Diff found → Fail build<br><span style="font-size:10px;color:var(--red)">Human reviews: accept or fix</span></div>
+          <div class="bridge-arrow">/</div>
+          <div class="bridge-box" style="border-color:rgba(45,198,83,0.4);background:rgba(45,198,83,0.08)">✅ No diff → Pass build<br><span style="font-size:10px;color:var(--green)">Pipeline continues</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-55">
+      <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Visual Regression Tools</div>
+      <table class="data-table mb-12" style="font-size:11px">
+        <thead><tr><th>Tool</th><th>Integrates With</th><th>Type</th><th>Best For</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Chromatic</strong></td><td>Storybook</td><td class="good">Cloud SaaS</td><td>Design review workflow</td></tr>
+          <tr><td><strong>Playwright</strong></td><td>Any browser</td><td>Open Source</td><td>Full-page / E2E</td></tr>
+          <tr><td><strong>Percy</strong></td><td>Any test runner</td><td>Cloud SaaS</td><td>Full-page snapshots</td></tr>
+          <tr><td><strong>Reg-suit</strong></td><td>Any runner</td><td>Open Source</td><td>S3-stored baselines</td></tr>
+          <tr><td><strong>BackstopJS</strong></td><td>CLI / Node</td><td>Open Source</td><td>Static site pages</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:11px;font-weight:700;color:var(--teal);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Chromatic Workflow (Industry Standard)</div>
+      <div class="steps" style="gap:6px">
+        <div class="step"><div class="step-num">1</div><div class="step-text">Developer pushes code to GitHub</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-text">CI runs <code>chromatic --project-token=…</code></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-text">Chromatic takes screenshots of <strong>every story</strong> in every browser</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-text">Compares against accepted baseline screenshots</div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-text">Diffs appear in Chromatic UI — Designer or Tech Lead reviews</div></div>
+        <div class="step"><div class="step-num">6</div><div class="step-text"><strong style="color:var(--green)">Accept</strong> (new baseline) or <strong style="color:var(--red)">Deny</strong> (fix needed) → PR status updated</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 18 — DESIGNER-ENGINEER BRIDGE -->
+<div class="slide" id="s18">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Session 3</span></div>
+    <div class="slide-title">Designer ↔ Engineer <span class="highlight">Bridge</span></div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="quote mb-12"><p>"The button has <strong>12px on left and right</strong>" → <code>padding: 12px 12px</code>. <strong>Not the same thing.</strong> The spec said horizontal padding only. The developer added it to top and bottom too."</p></div>
+      <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Design Tokens — Shared Language</div>
+      <table class="data-table mb-12" style="font-size:11px">
+        <thead><tr><th>In Figma/Pencil</th><th>In CSS</th><th>In JavaScript</th></tr></thead>
+        <tbody>
+          <tr><td><code>color/primary/500</code></td><td><code>--color-primary-500</code></td><td><code>tokens.color.primary[500]</code></td></tr>
+          <tr><td><code>spacing/4</code></td><td><code>--spacing-4</code> (16px)</td><td><code>tokens.spacing[4]</code></td></tr>
+          <tr><td><code>font/size/lg</code></td><td><code>--font-size-lg</code> (18px)</td><td><code>tokens.font.size.lg</code></td></tr>
+          <tr><td><code>radius/button</code></td><td><code>--radius-button</code> (6px)</td><td><code>tokens.radius.button</code></td></tr>
+        </tbody>
+      </table>
+      <div class="card teal" style="padding:12px 16px">
+        <div class="card-title">addon-designs — Figma Inside Storybook</div>
+        <p style="font-size:11.5px;color:var(--muted);margin-top:6px">Embed the Figma/Pencil frame URL directly in the Storybook panel. Developer sees the design spec and the live component <strong style="color:var(--teal)">side by side</strong>.</p>
+        <div class="code-panel mt-8" style="font-size:10px;flex:unset">
+<span class="kw">export const</span> Default = {<br>
+&nbsp; args: { order: mockOrder },<br>
+&nbsp; parameters: {<br>
+&nbsp;&nbsp;&nbsp; design: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; type: <span class="st">'figma'</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; url: <span class="st">'https://www.figma.com/file/…/OrderCard?node-id=…'\</span\>,\<br\>
+&nbsp;&nbsp;&nbsp; },<br>
+&nbsp; },<br>
+};
+        </div>
+      </div>
+    </div>
+    <div class="col-45">
+      <div style="font-size:11px;font-weight:700;color:var(--purple);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Before &amp; After Storybook</div>
+      <div class="card red" style="padding:12px 16px;margin-bottom:10px">
+        <div class="card-title">BEFORE — Manual, Error-Prone</div>
+        <div class="steps" style="gap:6px">
+          <div class="step"><div class="step-num">1</div><div class="step-text">Designer exports Figma PDF / PNG to Slack</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Engineer builds component. 3 days pass.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Designer reviews full app. "This is wrong."</div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-text">Engineer finds the old Slack message, re-checks.</div></div>
+          <div class="step"><div class="step-num">5</div><div class="step-text">4 rounds of back-and-forth. Ship delayed.</div></div>
+        </div>
+      </div>
+      <div class="card green" style="padding:12px 16px">
+        <div class="card-title">AFTER — Systematic, Verifiable</div>
+        <div class="steps" style="gap:6px">
+          <div class="step"><div class="step-num">1</div><div class="step-text">Designer links Figma frame in the Story via <code>addon-designs</code></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Engineer builds. Storybook shows design next to component.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Engineer accepts Chromatic baseline on first PR.</div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-text">Every future push: Chromatic diffs against baseline automatically.</div></div>
+          <div class="step"><div class="step-num">5</div><div class="step-text">Designer Accept/Deny in Chromatic UI. PR blocked until approved.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 19 — S4 BREAK: MINI-PROJECT -->
+<div class="slide section-break" id="s19">
+  <div class="section-num">4</div>
+  <div class="section-label">Mini-Project · 13:45 – 15:45</div>
+  <div class="section-title">🛠 FIFGROUP Sprint 1<br>Design &amp; Scope Lock</div>
+  <div class="section-sub">Real-Time Loan Status Visibility · Groups of 3–4 · 120 minutes<br>Read Design · Design Review · Scope Lock · Storybook Stories · Presentation</div>
+  <div class="section-duration">⏱ 120 minutes · Group Project + Presentation</div>
+</div>
+
+<-s SLIDE 20 — MINI-PROJECT PROBLEM STATEMENT -->
+<div class="slide" id="s20">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot teal"></div><span>Mini-Project</span></div>
+    <div class="slide-title">FIFGROUP <span class="highlight">Loan Application System</span></div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="card amber" style="padding:14px 18px;margin-bottom:14px">
+        <div class="card-title">📋 Sprint Goal</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.7">The PM hands you a wireframe for a new <strong style="color:var(--text)">Loan Status Dashboard</strong> for Petugas Cabang. Your job this sprint: build the feature so branch officers can see <strong style="color:var(--text)">real-time application status</strong> without calling HQ. Target: reduce <strong style="color:var(--accent)">120 manual calls/day → &lt;20</strong>.<br><br>The wireframe shows: a status card per loan (5 states: NEW → VERIFIED → SCORED → APPROVED / REJECTED), a last-updated timestamp, and a branch-filtered list view.</p>
+      </div>
+      <div class="card purple" style="padding:12px 16px">
+        <div class="card-title">🎯 What to Deliver</div>
+        <ul class="bullets" style="margin-top:6px">
+          <li>Developer checklist from reading the wireframe (missing specs, edge cases, questions)</li>
+          <li>Design review findings — what is ambiguous, what is missing before coding starts?</li>
+          <li>Scope lock: IN (must ship), OUT (explicitly excluded), DEFERRED (future sprint)</li>
+          <li>Storybook story list for <code>LoanStatusCard</code> — all 5 states + edge cases</li>
+          <li>Architecture decision: how does the status update reach the dashboard in real-time?</li>
+        </ul>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+<-s SLIDE 21 — EVALUATION CRITERIA -->
+<div class="slide" id="s21">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot teal"></div><span>Mini-Project</span></div>
+    <div class="slide-title">Evaluation <span class="highlight">Criteria &amp; Rubric</span></div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Scoring Rubric (100 Points Total)</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Criterion</th><th style="text-align:center">Points</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Context diagram covers all 6 FIFGROUP actors (Nasabah, Petugas Cabang, Analis Kredit, Komite Kredit, Sistem Scoring, Dukcapil) + the new dashboard</td><td style="text-align:center"><span class="pill pill-green">15 pts</span></td></tr>
+          <tr><td>Architecture decision is explicit — polling vs. WebSocket vs. SSE — with justification tied to the 120 calls/day metric</td><td style="text-align:center"><span class="pill pill-green">15 pts</span></td></tr>
+          <tr><td>Developer checklist identifies ≥3 missing specs from the wireframe (e.g., which branch filter applies, what does "real-time" mean, what if Scoring API is down?)</td><td style="text-align:center"><span class="pill pill-green">15 pts</span></td></tr>
+          <tr><td>Scope lock is FIFGROUP-specific — IN: real-time status view for Petugas Cabang / OUT must name ≥2 explicit items (e.g., push notifications, CSV export, analytics charts)</td><td style="text-align:center"><span class="pill pill-orange">20 pts</span></td></tr>
+          <tr><td>Design review findings include ≥2 security / compliance concerns (branch data isolation, no PII shown in status card, OJK audit trail)</td><td style="text-align:center"><span class="pill pill-green">15 pts</span></td></tr>
+          <tr><td>Storybook story list covers all 5 loan status states (NEW, VERIFIED, SCORED, APPROVED, REJECTED) + ≥2 edge cases</td><td style="text-align:center"><span class="pill pill-teal">10 pts</span></td></tr>
+          <tr><td>Presentation uses correct Day 1–4 vocabulary (context diagram, scope lock, design review, story, contract)</td><td style="text-align:center"><span class="pill pill-teal">10 pts</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-45">
+      <div style="font-size:11px;font-weight:700;color:var(--teal);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">What Makes a Strong Submission</div>
+      <div class="checklist" style="margin-bottom:14px">
+        <div class="check-item"><span class="check-icon">✅</span><span>Checklist questions are specific — "What happens when Scoring API returns 503?" not "What if there's an error?"</span></div>
+        <div class="check-item"><span class="check-icon">✅</span><span>Scope lock answers the PM's real requests: push notif → OUT, CSV export → OUT, analytics → DEFERRED Sprint 3</span></div>
+        <div class="check-item"><span class="check-icon">✅</span><span>Storybook stories name the actor: "Petugas Cabang sees APPROVED status for loan APP-2024-001"</span></div>
+        <div class="check-item"><span class="check-icon">✅</span><span>Design review raises the branch isolation question — can Petugas Cabang JKT-001 see loans from JKT-002?</span></div>
+        <div class="check-item"><span class="check-icon">✅</span><span>Architecture decision references the 120 calls/day → &lt;20 target as the driver</span></div>
+        <div class="check-item"><span class="check-icon">✅</span><span>Team can answer one unexpected design review question from the class</span></div>
+      </div>
+      <div class="card red" style="padding:12px 16px;margin-bottom:12px">
+        <div class="card-title">Common Mistakes to Avoid</div>
+        <ul class="bullets" style="margin-top:6px">
+          <li>Proposing WebSocket for 300 branches without discussing connection cost (YAGNI)</li>
+          <li>Scope lock that just says "notifications for later" — be explicit: which notification, which sprint</li>
+          <li>Storybook stories that only cover the happy path (APPROVED) — 5 states are required</li>
+          <li>Design review that misses security: Petugas Cabang must only see their own branch's loans</li>
+        </ul>
+      </div>
+      <div class="quote" style="padding:12px 16px">
+        <p style="font-size:12px">A scope lock isn't a "no" — it's a <strong>promise</strong>. When Petugas Cabang asks "can we see the full history?", a good scope lock says exactly when that will ship.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 22 — WRAP UP S4 -->
+<div class="slide section-break" id="s22">
+  <div class="section-num">✦</div>
+  <div class="section-label">Wrap-Up · 15:45 – 16:00</div>
+  <div class="section-title">Exit Criteria &amp;<br>The 4-Day Journey</div>
+  <div class="section-sub">What you can do · What you have built · Where to go next</div>
+  <div class="section-duration">⏱ 15 minutes · Debrief &amp; Reflection</div>
+</div>
+
+<-s SLIDE 23 — EXIT CRITERIA -->
+<div class="slide" id="s23">
+  <div class="slide-header">
+    <div class="session-badge"><div class="session-badge-dot"></div><span>Wrap-Up</span></div>
+    <div class="slide-title">Exit Criteria &amp; <span class="highlight">The 4-Day Journey</span></div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Day 4 Exit Criteria — You Can Now:</div>
+      <div class="checklist mb-16">
+        <div class="check-item"><span class="check-icon">✅</span><span>Read a wireframe and produce a developer checklist of missing specifications before writing any code</span></div>
+        <div class="check-item"><span class="check-icon">✅</span><span>Facilitate a design review meeting — raise concerns using the correct vocabulary (bikeshedding, gold-plating, YAGNI)</span></div>
+        <div class="check-item"><span class="check-icon">✅</span><span>Write a formal scope lock document with explicit IN / OUT / DEFERRED sections</span></div>
+        <div class="check-item"><span class="check-icon">✅</span><span>Explain what a Storybook story is and write stories for all component states including edge cases</span></div>
+        <div class="check-item"><span class="check-icon">✅</span><span>Deliver a sprint architecture with a context diagram, architecture diagram, API contract, and scope lock</span></div>
+        <div class="check-item"><span class="check-icon">✅</span><span>Explain how Day 1 through Day 4 connect as a single software engineering workflow</span></div>
+      </div>
+      <div class="card amber" style="padding:12px 16px">
+        <div class="card-title">What Comes Next</div>
+        <ul class="bullets" style="margin-top:6px">
+          <li>Apply this to your real project this sprint</li>
+          <li>Set up Storybook on your component library</li>
+          <li>Propose a scope lock process in your next planning session</li>
+          <li>Run one design review — even informally</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-45">
+      <div style="font-size:12px;font-weight:700;color:var(--teal);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">The 4-Day Journey — Complete</div>
+      <div class="card teal" style="padding:16px 18px;margin-bottom:12px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="background:var(--navy);border:2px solid var(--accent);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap;min-width:48px;text-align:center">Day 1</div>
+            <div><div style="font-size:12px;font-weight:700;color:var(--text)">WHAT does the system look like?</div><div style="font-size:11px;color:var(--muted)">System design, C4 diagrams, domain modelling, architecture decisions</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="background:var(--navy);border:2px solid var(--teal);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--teal);white-space:nowrap;min-width:48px;text-align:center">Day 2</div>
+            <div><div style="font-size:12px;font-weight:700;color:var(--text)">HOW do the layers communicate?</div><div style="font-size:11px;color:var(--muted)">API design, REST contracts, authentication, error conventions</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="background:var(--navy);border:2px solid var(--purple);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--purple);white-space:nowrap;min-width:48px;text-align:center">Day 3</div>
+            <div><div style="font-size:12px;font-weight:700;color:var(--text)">HOW do we write code well?</div><div style="font-size:11px;color:var(--muted)">Clean code, SOLID, design patterns, testing, CI/CD quality gates</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="background:var(--navy);border:2px solid var(--green);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--green);white-space:nowrap;min-width:48px;text-align:center">Day 4</div>
+            <div><div style="font-size:12px;font-weight:700;color:var(--text)">WHAT are we building right now?</div><div style="font-size:11px;color:var(--muted)">Reading design, design review, scope lock, Storybook, living documentation</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="quote" style="text-align:center;padding:18px 20px">
+        <p style="font-size:15px;font-weight:700;color:var(--accent)">🎉 Congratulations</p>
+        <p style="font-size:12.5px;color:var(--muted);margin-top:8px">You've completed all 4 days. You now have the language, the tools, and the process to build software that is <strong style="color:var(--text)">right</strong> — not just working.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<-s SLIDE 24 — THANK YOU -->
+<div class="slide cover" id="s24">
+  <div class="cover-day">Day 4 of 4 — Complete</div>
+  <div class="cover-title">Thank You</div>
+  <div class="cover-sub">Design Literacy · Design Review · Scope Lock · Storybook</div>
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap">
+    <span class="pill pill-orange">Day 1: System Design</span>
+    <span class="pill pill-teal">Day 2: API Design</span>
+    <span class="pill pill-purple">Day 3: Code Quality</span>
+    <span class="pill pill-green">Day 4: Design Literacy ✓</span>
+  </div>
+  <div style="margin-top:32px;font-size:13px;color:var(--muted);max-width:480px;text-align:center;line-height:1.7">
+    The best software engineers are not those who write the most clever code — they are those who deeply understand <strong style="color:var(--text)">what to build</strong>, <strong style="color:var(--text)">why to build it</strong>, and <strong style="color:var(--text)">when to stop</strong>.
+  </div>
+</div>
+
+</div><-s /deck -->
+</div><-s /wrapper -->
+
+<div id="nav">
+  <button class="nav-btn" id="btn-prev">&#8592;</button>
+  <span id="slide-counter">1 / 24</span>
+  <button class="nav-btn" id="btn-next">&#8594;</button>
+</div>
+<div id="progress-bar"></div>
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let current  = 0;
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+    document.getElementById('slide-counter').textContent = `${current + 1} / ${total}`;
+    document.getElementById('progress-bar').style.width = `${((current + 1) / total) * 100}%`;
+  }
+  document.getElementById('btn-prev').addEventListener('click', () => goTo(current - 1));
+  document.getElementById('btn-next').addEventListener('click', () => goTo(current + 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')  { e.preventDefault(); goTo(current - 1); }
+    if (e.key === 'Home') goTo(0);
+    if (e.key === 'End')  goTo(total - 1);
+  });
+  function scaleToFit() {
+    const wrapper = document.getElementById('wrapper');
+    const deck    = document.getElementById('deck');
+    const scale = Math.min(wrapper.clientWidth / 1280, wrapper.clientHeight / 720);
+    deck.style.transform = `scale(${scale})`;
+    deck.style.transformOrigin = 'center center';
+  }
+  scaleToFit();
+  window.addEventListener('resize', scaleToFit);
+  document.getElementById('progress-bar').style.width = `${(1 / total) * 100}%`;
+</script>
+</body>
+</html>
