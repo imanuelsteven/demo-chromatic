@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 export function Button({ label, variant = 'accent', size = 'md', type = 'button', ...rest }) {
   return (
     <button type={type} className={`ui-button ui-button-${variant} ui-button-${size}`} {...rest}>
-      {label}
+      title {label}
     </button>
   );
 }
