@@ -10,7 +10,7 @@ export function Button({ label, variant = 'accent', size = 'md', type = 'button'
 
 Button.propTypes = {
   label: PropTypes.string.isRequired,
-  variant: PropTypes.oneOf(['accent', 'teal', 'danger', 'ghost']),
+  variant: PropTypes.oneOf(['accent', 'teal', 'danger', 'ghost', 'muted']),
   size: PropTypes.oneOf(['sm', 'md']),
   type: PropTypes.oneOf(['button', 'submit', 'reset'])
 };

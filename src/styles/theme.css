@@ -13,6 +13,130 @@
   --border: rgba(255, 255, 255, 0.08);
 }
 
+/* LoanRegister component styles */
+.loan-register {
+  max-width: 920px;
+  margin: 48px auto;
+  padding: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 12px;
+}
+
+.loan-title {
+  margin: 0 0 18px;
+  font-size: 1.6rem;
+  color: var(--text);
+}
+
+.loan-error {
+  margin: 0 0 12px;
+  color: #ff8189;
+  background: rgba(255,129,137,0.06);
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,129,137,0.12);
+}
+
+.loan-form {
+  display: grid;
+  gap: 14px;
+}
+
+.loan-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.loan-field {
+  display: grid;
+  gap: 8px;
+}
+
+.loan-field > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.loan-input,
+.loan-select,
+.loan-textarea,
+.loan-file {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  color: var(--text);
+  padding: 8px 12px;
+  font: inherit;
+}
+
+.loan-textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.loan-file {
+  padding: 6px 8px;
+}
+
+/* Improve contrast and readability for select controls */
+.loan-select {
+  /* stronger background and border for contrast */
+  background: var(--navy-card);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: var(--text);
+  /* remove native arrow so appearance is consistent */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 40px; /* space for arrow */
+  background-image: linear-gradient(45deg, transparent 50%, var(--text) 50%),
+                    linear-gradient(135deg, var(--text) 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% - 6px), calc(100% - 13px) calc(50% - 6px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  box-shadow: none;
+}
+
+.loan-select:focus {
+  outline: none;
+  border-color: rgba(232,160,32,0.85);
+  box-shadow: 0 0 0 6px rgba(232,160,32,0.18);
+}
+
+/* Hide default IE arrow */
+.loan-select::-ms-expand {
+  display: none;
+}
+
+/* Try to style native option items for better contrast where supported */
+.loan-select option {
+  background: var(--navy-card);
+  color: var(--text);
+}
+
+/* Hover state to increase perceived contrast */
+.loan-select:hover {
+  border-color: rgba(255,255,255,0.28);
+}
+
+.loan-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+@media (max-width: 800px) {
+  .loan-row {
+    grid-template-columns: 1fr;
+  }
+}
 * {
   box-sizing: border-box;
 }
